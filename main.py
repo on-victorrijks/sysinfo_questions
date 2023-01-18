@@ -2,6 +2,7 @@ import requests as rs
 import tkinter as tk
 import csv
 import random as rn
+import os
 
 """""""""""""""""
 DOWNLOAD LATEST
@@ -10,6 +11,8 @@ DOWNLOAD LATEST
 URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT1aGnC0w_8tdLizE5NTXX0NI5u-shqK4qikxTqh4omMzYkVup5fx9KedGn-J4AOOuT_n3EA18maMLd/pub?gid=0&single=true&output=csv'
 try:
     res=rs.get(url=URL)
+    if os.path.exists("questions.csv"):
+        os.remove("questions.csv")
     open('questions.csv', 'wb').write(res.content)
     print("Dernière version des questions téléchargée!")
 except:
@@ -42,7 +45,7 @@ with open('questions.csv', encoding="utf-8") as csv_file:
     line_count = 0
     for i,row in enumerate(csv_reader):
         if i>0:
-            Q, R, M = row
+            Q, R, M = row[0], row[1], row[2]
             DATA.append(Question(Q, R, M))
             line_count += 1
     print(f'{line_count} questions trouvées !')
@@ -50,6 +53,8 @@ with open('questions.csv', encoding="utf-8") as csv_file:
 """""""""""""""""
 GUI
 """""""""""""""""
+nbQ = len(DATA)
+nbQ_r = 1
 if len(DATA)>0:
 
     root = tk.Tk()
@@ -59,37 +64,50 @@ if len(DATA)>0:
     frame.pack(fill=tk.BOTH, expand=True, padx=25, pady=25)
 
     DEFANSWER = "Réponse cachée"
+    NEWLINE = "µ"
+
 
     def fmt(t):
         words = t.split(" ")
+        counter = 0
         res = []
         for i,word in enumerate(words):
-            if i%16==0 and i>0:
+            if counter==16 and i>0:
                 res.append("\n")
-            res.append(word)
+                counter = 0
+            if word==NEWLINE:
+                res.append("\n")
+                counter = 0
+            else:
+                res.append(word)
+                counter+=1
         return " ".join(res)
 
     def getQuestion():
+        global nbQ_r
         global root
         if(len(DATA)==0):
             root.quit()
-        newQuestion = rn.choice(DATA)
+        nbQ_r+=1
+        newQuestion = DATA[len(DATA)-1]
         DATA.remove(newQuestion)
         return newQuestion
 
     actualQuestion = getQuestion()
 
-    Title = tk.Label(frame, text="SYSINFO Questionnaire", font=('Arial', 32), width=100, height=2, bg="white", fg="#6c5ce7")
+    Title = tk.Label(frame, text=f"Question 1/{nbQ}", font=('Arial', 32), width=100, height=2, bg="white", fg="#6c5ce7")
     questionText = tk.Label(frame, text=fmt(actualQuestion.Q()), font=('Arial', 15), width=100, height=2, bg="white")
     matiereText = tk.Label(frame, text=fmt(actualQuestion.M()), font=('Arial', 12), width=100, height=2, bg="white", fg="#050505")
     answerText = tk.Label(frame, text=DEFANSWER, font=('Arial', 15), width=100, height=15, bg="white")
 
     def show_question():
+        global Title
         global actualQuestion
         global questionText
         global answerText
         actualQuestion = getQuestion()
 
+        Title.config(text=f"Question {nbQ_r}/{nbQ}")
         questionText.config(text=fmt(actualQuestion.Q()))
         matiereText.config(text=fmt(actualQuestion.M()))
         answerText.config(text=DEFANSWER)
