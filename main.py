@@ -89,7 +89,8 @@ if len(DATA)>0:
         if(len(DATA)==0):
             root.quit()
         nbQ_r+=1
-        newQuestion = DATA[len(DATA)-1]
+        #newQuestion = DATA[len(DATA)-1]
+        newQuestion = rn.choice(DATA)
         DATA.remove(newQuestion)
         return newQuestion
 
