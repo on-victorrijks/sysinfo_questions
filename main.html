@@ -187,7 +187,10 @@
     // end
 
     function fmt(s){
-        return s.replace("µ", "<br />");
+        while(s.includes("µ")){
+            s = s.replace("µ", "<br />")
+        }
+        return s;
     }
 
     function getQuestion(next){
