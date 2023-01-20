@@ -40,6 +40,10 @@
         </div>
 
         <div class="actions" id="actionsContainer" hidden="true">
+            <button id="lastQuestion" class="lastQuestion">
+                <b>Retourner à la question précédente</b>
+                <i>ARROW LEFT</i>
+            </button>
             <button id="showAnswer" class="showAnswer">
                 <b>Voir la réponse</b>
                 <i>SPACE</i>
@@ -249,7 +253,7 @@
             if (e.keyCode == '37') prev();
         } else {
             if (isMacro(e)) next();
-            else hideAnswer();
+            if (e.keyCode == '37') prev();
         }
     });
         
@@ -316,6 +320,9 @@
     }
     .actions[hidden="true"] button.nextQuestion{
         display: none;
+    }
+    .actions button.lastQuestion{
+        background-color: #341f97;
     }
     button.nextQuestion{
         background-color: #16a085;
