@@ -53,6 +53,10 @@ with open('questions.csv', encoding="utf-8") as csv_file:
 """""""""""""""""
 GUI
 """""""""""""""""
+
+I = 1
+rn.shuffle(DATA)
+
 nbQ = len(DATA)
 nbQ_r = 1
 if len(DATA)>0:
@@ -83,32 +87,47 @@ if len(DATA)>0:
                 counter+=1
         return " ".join(res)
 
-    def getQuestion():
-        global nbQ_r
-        global root
-        if(len(DATA)==0):
-            root.quit()
-        nbQ_r+=1
-        #newQuestion = DATA[len(DATA)-1]
-        newQuestion = rn.choice(DATA)
-        DATA.remove(newQuestion)
-        return newQuestion
+    def getQuestion(next):
+        global I
+        print(I)
+        if I >= len(DATA): root.quit()
+        if next:
+            I += 1
+            return DATA[I]
+        else:
+            if (I == 0): return actualQuestion
+            else:
+                I -= 1
+                return DATA[I]
 
-    actualQuestion = getQuestion()
+
+    actualQuestion = DATA[0]
 
     Title = tk.Label(frame, text=f"Question 1/{nbQ}", font=('Arial', 32), width=100, height=2, bg="white", fg="#6c5ce7")
     questionText = tk.Label(frame, text=fmt(actualQuestion.Q()), font=('Arial', 15), width=100, height=2, bg="white")
     matiereText = tk.Label(frame, text=fmt(actualQuestion.M()), font=('Arial', 12), width=100, height=2, bg="white", fg="#050505")
     answerText = tk.Label(frame, text=DEFANSWER, font=('Arial', 15), width=100, height=15, bg="white")
 
-    def show_question():
+    def show_next_question():
         global Title
         global actualQuestion
         global questionText
         global answerText
-        actualQuestion = getQuestion()
+        actualQuestion = getQuestion(True)
 
-        Title.config(text=f"Question {nbQ_r}/{nbQ}")
+        Title.config(text=f"Question {I}/{nbQ}")
+        questionText.config(text=fmt(actualQuestion.Q()))
+        matiereText.config(text=fmt(actualQuestion.M()))
+        answerText.config(text=DEFANSWER)
+
+    def show_prev_question():
+        global Title
+        global actualQuestion
+        global questionText
+        global answerText
+        actualQuestion = getQuestion(False)
+
+        Title.config(text=f"Question {I}/{nbQ}")
         questionText.config(text=fmt(actualQuestion.Q()))
         matiereText.config(text=fmt(actualQuestion.M()))
         answerText.config(text=DEFANSWER)
@@ -118,7 +137,8 @@ if len(DATA)>0:
         global answerText
         answerText.config(text=fmt(actualQuestion.R()))
 
-    BTN_NEXT = tk.Button(frame, text="Prochaine question", command=show_question)
+    BTN_NEXT = tk.Button(frame, text="Prochaine question", command=show_next_question)
+    BTN_PREV = tk.Button(frame, text="Question précédente", command=show_prev_question)
     BTN_ANSWER = tk.Button(frame, text="Voir la réponse", command=show_answer)
 
     Title.pack()
@@ -126,6 +146,7 @@ if len(DATA)>0:
     matiereText.pack()
     answerText.pack()
     BTN_NEXT.pack()
+    BTN_PREV.pack()
     BTN_ANSWER.pack()
 
     root.mainloop()
