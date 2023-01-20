@@ -4,10 +4,7 @@
 <title>SYSINFO - Questionnaire</title>
 </head>
 <body>
-
-
     <div class="container">
-
         <div class="loadCSV-container" hidden="false" id="lCc">
             <div class="loadCSV">
                 <p>Veuillez sélectionner le CSV du questionnaire</p>
@@ -52,10 +49,7 @@
                 <i>SPACE</i>
             </button>
         </div>
-
     </div>
-
-
 </body>
 </html>
 
@@ -166,6 +160,8 @@
     
     var state = 0;
 
+    var iter = 1; //
+
     // read csv
 
     const fileInput = document.getElementById('csv')
@@ -174,15 +170,14 @@
         reader.onload = () => {
             const content = reader.result;
             const data = CSVToArray(content, ',');
-
             QUESTIONS = data.slice(1);
+            QUESTIONS = QUESTIONS.sort(() => Math.random() - 0.5);
             actQ = 0;
             totQ = QUESTIONS.length;
             COUNTER_TOT.innerHTML = totQ;
-            nextQuestion();
+            getQuestion();
 
             document.querySelector("#lCc").setAttribute("hidden", "true");
-
         }
         reader.readAsText(fileInput.files[0])
     }
@@ -191,39 +186,36 @@
 
     // end
 
-    function getRandomInt(min, max) {
-        min = Math.ceil(min);
-        max = Math.floor(max);
-        return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
-
     function fmt(s){
         return s.replace("µ", "<br />");
     }
 
-    function nextQuestion(){
-        if(QUESTIONS.length==0) {
+    function getQuestion(next){
+        if(iter >= QUESTIONS.length) {
             alert("woaw!");
             return;
         }
+
+        console.log(iter);
         
-        var randIndex = getRandomInt(0, QUESTIONS.length-1);
-        console.log(randIndex);
-        var newQuestion = QUESTIONS[randIndex];
-        QUESTIONS.splice(randIndex, 1);
-
-        state = 0;
-        actQ++;
-
-        COUNTER_ACT.innerHTML = actQ;
+        var newQuestion = QUESTIONS[iter];
+        COUNTER_ACT.innerHTML = iter;
 
         Q.innerHTML = fmt(newQuestion[0]);
         R.innerHTML = fmt(newQuestion[1]);
         M.innerHTML = fmt(newQuestion[2]);
 
-        answerContainer.setAttribute("hidden", "true");
-        actionsContainer.setAttribute("hidden", "true");
+        hideAnswer();
+    }
 
+    function next() {
+        if (iter < QUESTIONS.length) iter++;
+        getQuestion();
+    }
+
+    function prev() {
+        if (iter > 1) iter--;
+        getQuestion();
     }
 
     function showAnswer(){
@@ -232,8 +224,14 @@
         actionsContainer.setAttribute("hidden", "false");
     }
 
+    function hideAnswer(){
+        state = 0;
+        answerContainer.setAttribute("hidden", "true");
+        actionsContainer.setAttribute("hidden", "true");
+    }
+
     BTN_SHOWANSWER.addEventListener("click", showAnswer, false);
-    BTN_NEXTQUESTION.addEventListener("click", nextQuestion, false);
+    BTN_NEXTQUESTION.addEventListener("click", next, false);
 
     function isMacro(e){
         return  e.key == " " ||
@@ -243,12 +241,12 @@
     }
 
     document.addEventListener('keyup', (e) => {
-        if (isMacro(e)){
-            if(state==0){
-                showAnswer();
-            } else {
-                nextQuestion();
-            }
+        if (state==0) {
+            if (isMacro(e)) showAnswer();
+            if (e.keyCode == '37') prev();
+        } else {
+            if (isMacro(e)) next();
+            else hideAnswer();
         }
     });
         
