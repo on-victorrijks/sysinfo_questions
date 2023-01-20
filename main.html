@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>SYSINFO - Questionnaire</title>
+</head>
+<body>
+
+
+    <div class="container">
+
+        <div class="loadCSV-container" hidden="false" id="lCc">
+            <div class="loadCSV">
+                <p>Veuillez sélectionner le CSV du questionnaire</p>
+                <div class="in-c">
+                    <input id="csv" type="file" accept=".csv">
+                </div>
+            </div>
+        </div>
+
+        <div class="header">
+            <div class="title">
+                <h2>SYSINFO - Questionnaire</h2>
+            </div>
+            <div class="counter">
+                <h1>
+                    <span id="ansQ">0</span>
+                    /
+                    <span id="totQ">0</span>
+                </h1>
+            </div>
+        </div>
+
+        <div class="dyn">
+    
+            <div class="matiere_question">
+                <h3 id="M">Matière</h3>
+                <h1 id="Q">Question</h1>
+            </div>
+    
+            <div class="answer" id="answerContainer" hidden="true">
+                <h2 id="R">Réponse</h2>
+            </div>
+        </div>
+
+        <div class="actions" id="actionsContainer" hidden="true">
+            <button id="showAnswer" class="showAnswer">
+                <b>Voir la réponse</b>
+                <i>SPACE</i>
+            </button>
+            <button id="nextQuestion" class="nextQuestion">
+                <b>Prochaine question</b>
+                <i>SPACE</i>
+            </button>
+        </div>
+
+    </div>
+
+
+</body>
+</html>
+
+<script type="text/javascript">
+    // ref: http://stackoverflow.com/a/1293163/2343
+    // This will parse a delimited string into an array of
+    // arrays. The default delimiter is the comma, but this
+    // can be overriden in the second argument.
+    function CSVToArray( strData, strDelimiter ){
+        // Check to see if the delimiter is defined. If not,
+        // then default to comma.
+        strDelimiter = (strDelimiter || ",");
+
+        // Create a regular expression to parse the CSV values.
+        var objPattern = new RegExp(
+            (
+                // Delimiters.
+                "(\\" + strDelimiter + "|\\r?\\n|\\r|^)" +
+
+                // Quoted fields.
+                "(?:\"([^\"]*(?:\"\"[^\"]*)*)\"|" +
+
+                // Standard fields.
+                "([^\"\\" + strDelimiter + "\\r\\n]*))"
+            ),
+            "gi"
+            );
+
+
+        // Create an array to hold our data. Give the array
+        // a default empty first row.
+        var arrData = [[]];
+
+        // Create an array to hold our individual pattern
+        // matching groups.
+        var arrMatches = null;
+
+
+        // Keep looping over the regular expression matches
+        // until we can no longer find a match.
+        while (arrMatches = objPattern.exec( strData )){
+
+            // Get the delimiter that was found.
+            var strMatchedDelimiter = arrMatches[ 1 ];
+
+            // Check to see if the given delimiter has a length
+            // (is not the start of string) and if it matches
+            // field delimiter. If id does not, then we know
+            // that this delimiter is a row delimiter.
+            if (
+                strMatchedDelimiter.length &&
+                strMatchedDelimiter !== strDelimiter
+                ){
+
+                // Since we have reached a new row of data,
+                // add an empty row to our data array.
+                arrData.push( [] );
+
+            }
+
+            var strMatchedValue;
+
+            // Now that we have our delimiter out of the way,
+            // let's check to see which kind of value we
+            // captured (quoted or unquoted).
+            if (arrMatches[ 2 ]){
+
+                // We found a quoted value. When we capture
+                // this value, unescape any double quotes.
+                strMatchedValue = arrMatches[ 2 ].replace(
+                    new RegExp( "\"\"", "g" ),
+                    "\""
+                    );
+
+            } else {
+
+                // We found a non-quoted value.
+                strMatchedValue = arrMatches[ 3 ];
+
+            }
+
+
+            // Now that we have our value string, let's add
+            // it to the data array.
+            arrData[ arrData.length - 1 ].push( strMatchedValue );
+        }
+
+        // Return the parsed data.
+        return( arrData );
+    }
+
+    var COUNTER_ACT = document.querySelector("#ansQ");
+    var COUNTER_TOT = document.querySelector("#totQ");
+
+    var M = document.querySelector("#M");
+    var Q = document.querySelector("#Q");
+    var R = document.querySelector("#R");
+
+    var answerContainer  = document.querySelector("#answerContainer");
+    var actionsContainer = document.querySelector("#actionsContainer");
+
+    var BTN_SHOWANSWER = document.querySelector("#showAnswer");
+    var BTN_NEXTQUESTION = document.querySelector("#nextQuestion");
+
+    var QUESTIONS = [];
+    var actQ = 0;
+    var totQ = 1;
+    
+    var state = 0;
+
+    // read csv
+
+    const fileInput = document.getElementById('csv')
+    const readFile = () => {
+        const reader = new FileReader()
+        reader.onload = () => {
+            const content = reader.result;
+            const data = CSVToArray(content, ',');
+
+            QUESTIONS = data.slice(1);
+            actQ = 0;
+            totQ = QUESTIONS.length;
+            COUNTER_TOT.innerHTML = totQ;
+            nextQuestion();
+
+            document.querySelector("#lCc").setAttribute("hidden", "true");
+
+        }
+        reader.readAsText(fileInput.files[0])
+    }
+
+    fileInput.addEventListener('change', readFile)
+
+    // end
+
+    function getRandomInt(min, max) {
+        min = Math.ceil(min);
+        max = Math.floor(max);
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function fmt(s){
+        return s.replace("µ", "<br />");
+    }
+
+    function nextQuestion(){
+        if(QUESTIONS.length==0) {
+            alert("woaw!");
+            return;
+        }
+        
+        var randIndex = getRandomInt(0, QUESTIONS.length-1);
+        console.log(randIndex);
+        var newQuestion = QUESTIONS[randIndex];
+        QUESTIONS.splice(randIndex, 1);
+
+        state = 0;
+        actQ++;
+
+        COUNTER_ACT.innerHTML = actQ;
+
+        Q.innerHTML = fmt(newQuestion[0]);
+        R.innerHTML = fmt(newQuestion[1]);
+        M.innerHTML = fmt(newQuestion[2]);
+
+        answerContainer.setAttribute("hidden", "true");
+        actionsContainer.setAttribute("hidden", "true");
+
+    }
+
+    function showAnswer(){
+        state = 1;
+        answerContainer.setAttribute("hidden", "false");
+        actionsContainer.setAttribute("hidden", "false");
+    }
+
+    BTN_SHOWANSWER.addEventListener("click", showAnswer, false);
+    BTN_NEXTQUESTION.addEventListener("click", nextQuestion, false);
+
+    function isMacro(e){
+        return  e.key == " " ||
+                e.code == "Space" ||      
+                e.keyCode == '32' || 
+                e.keyCode == '39'
+    }
+
+    document.addEventListener('keyup', (e) => {
+        if (isMacro(e)){
+            if(state==0){
+                showAnswer();
+            } else {
+                nextQuestion();
+            }
+        }
+    });
+        
+</script>
+
+<style>
+    #lCc[hidden="false"]{
+        display: block;
+    }
+    #lCc[hidden="true"]{
+        display: none;
+    }
+    .loadCSV p {
+        height: 50px;
+        text-align: center;
+        width: 100%;
+        font-weight: 500;
+        font-size: 18px;
+        justify-content: center;
+        align-items: center;
+        display: flex;
+        margin-bottom: 16px;
+    }
+    .loadCSV .in-c{
+        flex: 1;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: rgba(0,0,0,0.07);
+        border-radius: 8px;
+    }
+    .loadCSV{
+        position: absolute;
+        left: 0;right: 0;
+        top: 0;bottom: 0;
+        margin: auto;
+        width: 400px;
+        height: 200px;
+        background: white;
+        border-radius: 16px;
+        border: solid 1px #eee;
+        padding: 16px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    }
+    .loadCSV-container{
+        position: fixed;
+        left: 0;
+        top: 0;
+        z-index: 100;
+        background-color: rgba(0,0,0,0.25);
+        width: 100vw;
+        height: 100vh;
+    }
+
+    .answer[hidden="true"] h2{
+        filter: blur(4px);
+    }
+    .actions[hidden="false"] button.showAnswer{
+        display: none;
+    }
+    .actions[hidden="true"] button.nextQuestion{
+        display: none;
+    }
+    button.nextQuestion{
+        background-color: #16a085;
+    }
+    button.showAnswer{
+        background-color: #27ae60;
+    }
+    .actions button:hover{
+        opacity: .75;
+    }
+    .actions button i{
+        color: rgb(228, 228, 228);
+        font-size: 20px;
+        font-weight: 500;
+    }
+    .actions button b{
+        color: white;
+        font-size: 32px;
+        font-weight: 400;
+    }
+    .actions button{
+        border: 0;
+        border-radius: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        flex: 1;
+        height: 100%;
+        cursor: pointer;
+    }
+    .actions{
+        background-color: rgb(255, 255, 255);
+        height: 15vh;
+        width: 100vw;
+        position: absolute;
+        left: 0;
+        top: 85vh;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+    }
+    .dyn .answer h2{
+        font-weight: 400;
+        text-align: center;
+        max-width: 75%;
+    }
+    .dyn .answer{
+        flex: 5;
+        width: 100vw;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .dyn .matiere_question h1{
+        font-weight: 500;
+        font-size: 35px;
+        text-align: center;
+        max-width: 75%;
+    }
+    .dyn .matiere_question h3{
+        font-weight: 400;
+        text-align: center;
+        max-width: 75%;
+    }
+    .dyn .matiere_question{
+        flex: 1;
+        width: 100vw;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    }
+    .dyn{
+        padding: 20px 0;
+        background-color: #eee;
+        height: calc(65vh - 40px);
+        width: 100vw;
+        position: absolute;
+        left: 0;
+        top: 20vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .header .selectedMat h3{
+        color: white;
+        text-align: center;
+        font-weight: 400;
+    }
+    .header .selectedMat {
+        flex: 1;
+        display: flex;
+        align-items: center;
+    }
+    .header .counter h1{
+        color: white;
+        text-align: center;
+        font-weight: 400;
+    }
+    .header .counter {
+        flex: 1;
+        display: flex;
+        align-items: center;
+    }
+    .header .title h2{
+        color: white;
+        text-align: center;
+        font-weight: 400;
+    }
+    .header .title {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        width: 100vw;
+        background-color: rgba(255,255,255,0.1);
+        justify-content: center;
+    }
+    .header{
+        background-color: rgb(46 26 83);
+        height: 20vh;
+        width: 100vw;
+        position: absolute;
+        left: 0;
+        top: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .container{
+        background-color: black;
+        width: 100vw;
+        height: 100vh;
+        position: absolute;
+        left: 0;
+        top: 0;
+    }
+    *{
+        margin: 0;
+        padding: 0;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+</style>
