@@ -5,6 +5,7 @@
 </head>
 <body>
     <div class="container">
+
         <div class="loadCSV-container" hidden="false" id="lCc">
             <div class="loadCSV">
                 <p>Veuillez sélectionner le CSV du questionnaire</p>
@@ -14,16 +15,42 @@
             </div>
         </div>
 
+        <div class="chooseMatieres-container" hidden="true" id="cMc">
+            <div class="chooseMatiere">
+                <p>Quelles matières souhaitez-vous entrainer ?</p>
+                <form id="MatieresSelector">
+                    Loading...
+                </form>
+                <div class="subBtn">
+                    <button id="dechTout">Décocher tout</button>
+                    <button id="validateMatieres">Valider mon choix</button>
+                    <button id="cochTout">Cocher tout</button>
+                </div>
+            </div>
+        </div>
+
         <div class="header">
             <div class="title">
                 <h2>SYSINFO - Questionnaire</h2>
             </div>
             <div class="counter">
-                <h1>
-                    <span id="ansQ">0</span>
-                    /
-                    <span id="totQ">0</span>
-                </h1>
+                <div class="c">
+                    <h3>Avancement</h3>
+                    <h1>
+                        <span id="ansQ">0</span>
+                        /
+                        <span id="totQ">0</span>
+                    </h1>
+                </div>
+                <div class="sep"></div>
+                <div class="c">
+                    <h3>Résultat</h3>
+                    <h1>
+                        <span id="ansGood">0</span>
+                        /
+                        <span id="totQ">0</span>
+                    </h1>
+                </div>
             </div>
         </div>
 
@@ -46,11 +73,15 @@
             </button>
             <button id="showAnswer" class="showAnswer">
                 <b>Voir la réponse</b>
-                <i>SPACE</i>
+                <i>ARROW RIGHT | SPACE</i>
             </button>
             <button id="nextQuestion" class="nextQuestion">
                 <b>Prochaine question</b>
-                <i>SPACE</i>
+                <i>ARROW RIGHT | SPACE</i>
+            </button>
+            <button id="goodAnswer" class="goodAnswer">
+                <b>Bonne réponse</b>
+                <i>ARROW UP</i>
             </button>
         </div>
     </div>
@@ -135,7 +166,6 @@
 
             }
 
-
             // Now that we have our value string, let's add
             // it to the data array.
             arrData[ arrData.length - 1 ].push( strMatchedValue );
@@ -145,26 +175,39 @@
         return( arrData );
     }
 
-    var COUNTER_ACT = document.querySelector("#ansQ");
-    var COUNTER_TOT = document.querySelector("#totQ");
+    const COUNTER_ACT = document.querySelector("#ansQ");
+    const COUNTER_TOT = document.querySelectorAll("#totQ");
 
-    var M = document.querySelector("#M");
-    var Q = document.querySelector("#Q");
-    var R = document.querySelector("#R");
+    const COUNTER_GOOD = document.querySelector("#ansGood");
 
-    var answerContainer  = document.querySelector("#answerContainer");
-    var actionsContainer = document.querySelector("#actionsContainer");
+    const M = document.querySelector("#M");
+    const Q = document.querySelector("#Q");
+    const R = document.querySelector("#R");
 
-    var BTN_SHOWANSWER = document.querySelector("#showAnswer");
-    var BTN_NEXTQUESTION = document.querySelector("#nextQuestion");
+    const answerContainer  = document.querySelector("#answerContainer");
+    const actionsContainer = document.querySelector("#actionsContainer");
+
+    const BTN_SHOWANSWER = document.querySelector("#showAnswer");
+    const BTN_NEXTQUESTION = document.querySelector("#nextQuestion");
+
+    const BTN_DECHTOUT = document.querySelector("#dechTout");
+    const BTN_COCHTOUT = document.querySelector("#cochTout");
+    const BTN_VALIDATEMATIERES = document.querySelector("#validateMatieres");
+
+    const popup_lCc = document.querySelector("#lCc");
+    const popup_cMc = document.querySelector("#cMc");
+
+    const cMc_form = document.querySelector("#MatieresSelector");
 
     var QUESTIONS = [];
     var actQ = 0;
     var totQ = 1;
-    
+    var selectedMatieres = [];
+
     var state = 0;
 
     var iter = 1; //
+    var goodAnswerCounter = 0;
 
     // read csv
 
@@ -175,13 +218,43 @@
             const content = reader.result;
             const data = CSVToArray(content, ',');
             QUESTIONS = data.slice(1);
-            QUESTIONS = QUESTIONS.sort(() => Math.random() - 0.5);
-            actQ = 0;
-            totQ = QUESTIONS.length;
-            COUNTER_TOT.innerHTML = totQ;
-            getQuestion();
+            MATIERES = QUESTIONS.map((Q) => Q[2]).filter((v,i,s) => s.indexOf(v)==i);
+            selectedMatieres = MATIERES;
 
-            document.querySelector("#lCc").setAttribute("hidden", "true");
+            // we show the select matieres popup
+            popup_lCc.setAttribute("hidden", "true");
+            popup_cMc.setAttribute("hidden", "false");
+
+            // we add each matiere to the form
+            cMc_form.innerHTML = "";
+            MATIERES.forEach(MATIERE => {
+                /*
+                    // Format
+                    <div class="matiereBox">
+                        <input type="checkbox" id="matiere1" name="matiere1">
+                        <label for="matiere1">Défragmentation</label>
+                    </div>
+                */
+                const newMatiere = document.createElement("div");
+                newMatiere.setAttribute("class", "matiereBox");
+
+                const newCheckbox = document.createElement("input");
+                newCheckbox.setAttribute("type", "checkbox");
+                newCheckbox.setAttribute("id", MATIERE);
+                newCheckbox.setAttribute("name", MATIERE);
+                newCheckbox.setAttribute("checked", "true");
+
+                const newLabel = document.createElement("label");
+                newLabel.setAttribute("for", MATIERE);
+                newLabel.innerHTML = MATIERE;
+
+                newMatiere.appendChild(newCheckbox);
+                newMatiere.appendChild(newLabel);
+
+                cMc_form.appendChild(newMatiere);
+
+            });
+
         }
         reader.readAsText(fileInput.files[0])
     }
@@ -189,6 +262,48 @@
     fileInput.addEventListener('change', readFile)
 
     // end
+
+    function filterQuestionsBySelectedMatieres(){
+
+        QUESTIONS = QUESTIONS.filter((Q) => selectedMatieres.includes(Q[2]));
+        QUESTIONS = QUESTIONS.sort(() => Math.random() - 0.5);
+
+        actQ = 0;
+        totQ = QUESTIONS.length;
+
+        COUNTER_TOT.forEach(COUNTER_TOT_ => {
+            COUNTER_TOT_.innerHTML = totQ;
+        });
+
+        getQuestion();
+
+    }
+
+    function dechTout(){
+        document.querySelectorAll(".matiereBox input[type='checkbox']").forEach(checkbox => {
+            checkbox.checked = false;
+        });
+    }
+
+    function cochTout(){
+        document.querySelectorAll(".matiereBox input[type='checkbox']").forEach(checkbox => {
+            checkbox.checked = true;
+        });
+    }
+
+    function selectMatieres(){
+        var newSelectedMatieres = [];
+        document.querySelectorAll(".matiereBox input[type='checkbox']").forEach(checkbox => {
+            const MATIERE = checkbox.getAttribute("name");
+            const isChecked = checkbox.checked;
+            if(isChecked) newSelectedMatieres.push(MATIERE);
+        });
+        selectedMatieres = newSelectedMatieres;
+        popup_cMc.setAttribute("hidden", "true");
+
+        filterQuestionsBySelectedMatieres();
+        
+    }
 
     function fmt(s){
         while(s.includes("µ")){
@@ -202,8 +317,6 @@
             alert("woaw!");
             return;
         }
-
-        console.log(iter);
         
         var newQuestion = QUESTIONS[iter];
         COUNTER_ACT.innerHTML = iter;
@@ -220,9 +333,22 @@
         getQuestion();
     }
 
+    function addGoodAnswer(){
+        if(goodAnswerCounter>totQ) return;
+        goodAnswerCounter++;
+        COUNTER_GOOD.innerHTML = goodAnswerCounter;
+    }
+
+    function removeGoodAnswer(){
+        if(goodAnswerCounter<=0) return;
+        goodAnswerCounter--;
+        COUNTER_GOOD.innerHTML = goodAnswerCounter;
+    }
+
     function prev() {
         if (iter > 1) iter--;
         getQuestion();
+        removeGoodAnswer();
     }
 
     function showAnswer(){
@@ -240,6 +366,10 @@
     BTN_SHOWANSWER.addEventListener("click", showAnswer, false);
     BTN_NEXTQUESTION.addEventListener("click", next, false);
 
+    BTN_VALIDATEMATIERES.addEventListener("click", selectMatieres, false);
+    BTN_DECHTOUT.addEventListener("click", dechTout, false);
+    BTN_COCHTOUT.addEventListener("click", cochTout, false);
+
     function isMacro(e){
         return  e.key == " " ||
                 e.code == "Space" ||      
@@ -248,18 +378,121 @@
     }
 
     document.addEventListener('keyup', (e) => {
-        if (state==0) {
-            if (isMacro(e)) showAnswer();
-            if (e.keyCode == '37') prev();
-        } else {
-            if (isMacro(e)) next();
-            if (e.keyCode == '37') prev();
+        if (e.keyCode == '37') prev();
+        if (e.keyCode == '38') addGoodAnswer();
+        if (isMacro(e)){
+            if(state==0){showAnswer();} else {next();}
         }
     });
         
 </script>
 
 <style>
+    /* Matiere selector - START*/
+    #cMc[hidden="false"]{
+        display: block;
+    }
+    #cMc[hidden="true"]{
+        display: none;
+    }
+    .chooseMatiere form .matiereBox label{
+        flex: 1;
+        line-height: 24px;
+        font-weight: 500;
+        color: rgb(77, 77, 77);
+    }
+    .chooseMatiere form .matiereBox input[type="checkbox"]{
+        width: 24px;
+        height: 24px;
+        margin-right: 8px;
+    }
+    .chooseMatiere form .matiereBox{
+        display: flex;
+        flex-direction: row;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 8px;
+        background-color: rgba(0,0,0,0.07);
+        justify-content: center;
+        align-items: center;
+        margin: 3px;
+    }
+    .chooseMatiere form{
+        flex: 1;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        margin-bottom: 16px;
+    }
+    .chooseMatiere button#validateMatieres{
+        background-color: #6ab04c;
+    }
+    .chooseMatiere button:hover{
+        opacity: .8;
+    }
+    .chooseMatiere button{
+        border: none;
+        background-color: black;
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-size: 13px;
+        font-weight: 500;
+        color: white;
+        cursor: pointer;
+        margin: 0 5px;
+    }
+    .chooseMatiere .subBtn{
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+    }
+    .chooseMatiere p{
+        height: 50px;
+        text-align: center;
+        width: 100%;
+        font-weight: 500;
+        font-size: 18px;
+        justify-content: center;
+        align-items: center;
+        display: flex;
+        margin-bottom: 16px;
+    }
+    .chooseMatiere{
+        position: absolute;
+        left: 0;right: 0;
+        top: 0;bottom: 0;
+        margin: auto;
+        width: 400px;
+        height: 80vh;
+        background: white;
+        border-radius: 16px;
+        border: solid 1px #eee;
+        padding: 16px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    }
+    .chooseMatieres-container{
+        position: fixed;
+        left: 0;
+        top: 0;
+        z-index: 100;
+        background-color: rgba(0,0,0,0.25);
+        width: 100vw;
+        height: 100vh;
+    }
+    /* Matiere selector - END */
+
+    .sep{
+        width: 40px;
+        height: 4px;
+        background-color: rgba(255,255,255,0.1);
+        border-radius: 4px;
+        margin: 0 15px;
+    }
+
     #lCc[hidden="false"]{
         display: block;
     }
@@ -321,6 +554,9 @@
     .actions[hidden="true"] button.nextQuestion{
         display: none;
     }
+    .actions button.goodAnswer{
+        background-color: #6ab04c;
+    }
     .actions button.lastQuestion{
         background-color: #341f97;
     }
@@ -328,7 +564,7 @@
         background-color: #16a085;
     }
     button.showAnswer{
-        background-color: #27ae60;
+        background-color: #130f40;
     }
     .actions button:hover{
         opacity: .75;
@@ -418,10 +654,20 @@
         display: flex;
         align-items: center;
     }
-    .header .counter h1{
+    .header .counter .c h3{
+        color: #eee;
+        text-align: center;
+        font-weight: 300;
+    }
+    .header .counter .c h1{
         color: white;
         text-align: center;
         font-weight: 400;
+    }
+    .header .counter .c{
+        display: flex;
+        flex-direction: column;
+        width: 150px;
     }
     .header .counter {
         flex: 1;
