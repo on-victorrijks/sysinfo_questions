@@ -53,6 +53,12 @@
                     </h1>
                 </div>
             </div>
+            <div id="progress-bar">
+                <div id="progress"></div>
+            </div>
+            <div id="progress-bar-correct">
+                <div id="progress-correct"></div>
+            </div>
         </div>
 
         <div class="dyn">
@@ -211,8 +217,11 @@
 
     var state = 0;
 
-    var iter = 1; //
+    var iter = 0; //
     var goodAnswerCounter = 0;
+    var progressBar = document.getElementById("progress");
+    var progressBarCorrect = document.getElementById("progress-correct");
+    var stepSize = 0;
 
     // read csv
 
@@ -233,13 +242,6 @@
             // we add each matiere to the form
             cMc_form.innerHTML = "";
             MATIERES.forEach(MATIERE => {
-                /*
-                    // Format
-                    <div class="matiereBox">
-                        <input type="checkbox" id="matiere1" name="matiere1">
-                        <label for="matiere1">Défragmentation</label>
-                    </div>
-                */
                 const newMatiere = document.createElement("div");
                 newMatiere.setAttribute("class", "matiereBox");
 
@@ -272,6 +274,7 @@
 
         QUESTIONS = QUESTIONS.filter((Q) => selectedMatieres.includes(Q[2]));
         QUESTIONS = QUESTIONS.sort(() => Math.random() - 0.5);
+        stepSize = 100/QUESTIONS.length;
 
         actQ = 0;
         totQ = QUESTIONS.length;
@@ -346,15 +349,20 @@
 
             state = 0;
 
-            iter = 1;
+            iter = 0;
             goodAnswerCounter = 0;
+            progressBar.style.width = 0+"%";
+            progressBarCorrect.style.width = 0+"%";
             CHOOSE_TITLE.innerHTML = "Tu as terminé les questions, veux-tu continuer à t'entraîner ?"
+            hideAnswer();
             readFile();
             return;
         }
         
-        var newQuestion = QUESTIONS[iter-1];
+        var newQuestion = QUESTIONS[iter];
+        progressBar.style.width = iter*stepSize + "%";
         COUNTER_ACT.innerHTML = iter;
+        COUNTER_GOOD.innerHTML = goodAnswerCounter;
 
         Q.innerHTML = fmt(newQuestion[0]);
         R.innerHTML = fmt(newQuestion[1]);
@@ -365,6 +373,8 @@
 
     function next() {
         if (iter <= QUESTIONS.length) iter++;
+        progressBar.style.width = iter*stepSize + "%";
+        console.log(stepSize);
         getQuestion();
     }
 
@@ -372,8 +382,8 @@
         if (state == 0) return;
         else {
             goodAnswerCounter++;
+            progressBarCorrect.style.width = goodAnswerCounter*stepSize + "%";
             COUNTER_GOOD.innerHTML = goodAnswerCounter;
-            if(goodAnswerCounter>totQ) return;
             next();
         }
 
@@ -382,13 +392,13 @@
     function removeGoodAnswer(){
         if(goodAnswerCounter<=0) return;
         goodAnswerCounter--;
+        progressBarCorrect.style.width = goodAnswerCounter*stepSize + "%";
         COUNTER_GOOD.innerHTML = goodAnswerCounter;
     }
 
     function prev() {
-        if (iter > 1) {
+        if (iter > 0) {
             iter--;
-            removeGoodAnswer();
         }
         getQuestion();
         removeGoodAnswer();
@@ -774,5 +784,27 @@
         margin: 0;
         padding: 0;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    #progress-bar {
+    width: 100%;
+    height: 5px;
+    background-color: #ddd;
+    }
+
+    #progress {
+    width: 0%;
+    height: 100%;
+    background-color: rgb(105, 77, 157);
+    }
+    #progress-bar-correct {
+    width: 100%;
+    height: 5px;
+    background-color: #ddd;
+    }
+
+    #progress-correct {
+    width: 0%;
+    height: 100%;
+    background-color: rgb(84, 183, 137);
     }
 </style>
