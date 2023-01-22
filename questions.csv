@@ -1,5 +1,5 @@
 Question,Réponse,Matière,,,,
-Définis le shell,Le shell est  un programme designé pour permettre à l’utilisateur d’utiliser son ordinateur avec le clavier.,Utilisation du langage bash,,,,
+Définis le shell,Le shell est un programme designé pour permettre à l’utilisateur d’utiliser son ordinateur avec le clavier.,Utilisation du langage bash,,,,
 "Que fait l'utilitaire ""cat"" ?",lit et affiche le contenu d'un fichier,Utilisation du langage bash,,,,
 "Que fait l'utilitaire ""echo"" ?",affiche une chaine de caractères passée en argument,Utilisation du langage bash,,,,
 "Que fait l'utilitaire ""head"" ?",extrait le début d'un fichier,Utilisation du langage bash,,,,

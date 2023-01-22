@@ -189,6 +189,8 @@
 
     const BTN_SHOWANSWER = document.querySelector("#showAnswer");
     const BTN_NEXTQUESTION = document.querySelector("#nextQuestion");
+    const BTN_PREVQUESTION = document.querySelector("#lastQuestion");
+    const BTN_CORRECT = document.querySelector("#goodAnswer");
 
     const BTN_DECHTOUT = document.querySelector("#dechTout");
     const BTN_COCHTOUT = document.querySelector("#cochTout");
@@ -298,6 +300,12 @@
             const isChecked = checkbox.checked;
             if(isChecked) newSelectedMatieres.push(MATIERE);
         });
+
+        if (newSelectedMatieres.length == 0) {
+            alert("Tu dois choisir au moins une matière à étudier.");
+            return;
+        }
+
         selectedMatieres = newSelectedMatieres;
         popup_cMc.setAttribute("hidden", "true");
 
@@ -313,12 +321,12 @@
     }
 
     function getQuestion(next){
-        if(iter >= QUESTIONS.length) {
-            alert("woaw!");
+        if(iter > QUESTIONS.length) {
+            alert("Tu as atteint la fin des questions!");
             return;
         }
         
-        var newQuestion = QUESTIONS[iter];
+        var newQuestion = QUESTIONS[iter-1];
         COUNTER_ACT.innerHTML = iter;
 
         Q.innerHTML = fmt(newQuestion[0]);
@@ -329,14 +337,19 @@
     }
 
     function next() {
-        if (iter < QUESTIONS.length) iter++;
+        if (iter <= QUESTIONS.length) iter++;
         getQuestion();
     }
 
     function addGoodAnswer(){
-        if(goodAnswerCounter>totQ) return;
-        goodAnswerCounter++;
-        COUNTER_GOOD.innerHTML = goodAnswerCounter;
+        if (state == 0) return;
+        else {
+            if(goodAnswerCounter>totQ) return;
+            goodAnswerCounter++;
+            COUNTER_GOOD.innerHTML = goodAnswerCounter;
+            next();
+        }
+
     }
 
     function removeGoodAnswer(){
@@ -346,7 +359,10 @@
     }
 
     function prev() {
-        if (iter > 1) iter--;
+        if (iter > 1) {
+            iter--;
+            removeGoodAnswer();
+        }
         getQuestion();
         removeGoodAnswer();
     }
@@ -365,6 +381,11 @@
 
     BTN_SHOWANSWER.addEventListener("click", showAnswer, false);
     BTN_NEXTQUESTION.addEventListener("click", next, false);
+    BTN_CORRECT.addEventListener("click", addGoodAnswer, false);
+    BTN_PREVQUESTION.addEventListener("click", () => {
+        if (state == 1) hideAnswer();
+        else prev();
+    });
 
     BTN_VALIDATEMATIERES.addEventListener("click", selectMatieres, false);
     BTN_DECHTOUT.addEventListener("click", dechTout, false);
@@ -378,7 +399,10 @@
     }
 
     document.addEventListener('keyup', (e) => {
-        if (e.keyCode == '37') prev();
+        if (e.keyCode == '37') {
+            if (state == 1) hideAnswer();
+            else prev();
+        }
         if (e.keyCode == '38') addGoodAnswer();
         if (isMacro(e)){
             if(state==0){showAnswer();} else {next();}
