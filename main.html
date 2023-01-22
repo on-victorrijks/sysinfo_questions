@@ -17,14 +17,15 @@
 
         <div class="chooseMatieres-container" hidden="true" id="cMc">
             <div class="chooseMatiere">
-                <p>Quelles matières souhaitez-vous entrainer ?</p>
+                <p class="chooseTitle" id="chooseTitle">Quelles matières souhaitez-vous entrainer ?</p>
                 <form id="MatieresSelector">
                     Loading...
                 </form>
                 <div class="subBtn">
-                    <button id="dechTout">Décocher tout</button>
-                    <button id="validateMatieres">Valider mon choix</button>
                     <button id="cochTout">Cocher tout</button>
+                    <button id="validateMatieres">Valider mon choix</button>
+                    <button id="slide">Slide</button>
+                    <button id="invertTout">Inverser</button>
                 </div>
             </div>
         </div>
@@ -65,7 +66,6 @@
                 <h2 id="R">Réponse</h2>
             </div>
         </div>
-
         <div class="actions" id="actionsContainer" hidden="true">
             <button id="lastQuestion" class="lastQuestion">
                 <b>Retourner à la question précédente</b>
@@ -75,9 +75,9 @@
                 <b>Voir la réponse</b>
                 <i>ARROW RIGHT | SPACE</i>
             </button>
-            <button id="nextQuestion" class="nextQuestion">
-                <b>Prochaine question</b>
-                <i>ARROW RIGHT | SPACE</i>
+            <button id="badAnswer" class="badAnswer">
+                <b>Mauvaise réponse</b>
+                <i>ARROW DOWN</i>
             </button>
             <button id="goodAnswer" class="goodAnswer">
                 <b>Bonne réponse</b>
@@ -175,6 +175,8 @@
         return( arrData );
     }
 
+    const CHOOSE_TITLE = document.querySelector("#chooseTitle");
+
     const COUNTER_ACT = document.querySelector("#ansQ");
     const COUNTER_TOT = document.querySelectorAll("#totQ");
 
@@ -188,13 +190,14 @@
     const actionsContainer = document.querySelector("#actionsContainer");
 
     const BTN_SHOWANSWER = document.querySelector("#showAnswer");
-    const BTN_NEXTQUESTION = document.querySelector("#nextQuestion");
+    const BTN_INCORRECT = document.querySelector("#badAnswer");
     const BTN_PREVQUESTION = document.querySelector("#lastQuestion");
     const BTN_CORRECT = document.querySelector("#goodAnswer");
 
-    const BTN_DECHTOUT = document.querySelector("#dechTout");
+    const BTN_SLIDE = document.querySelector("#slide");
     const BTN_COCHTOUT = document.querySelector("#cochTout");
     const BTN_VALIDATEMATIERES = document.querySelector("#validateMatieres");
+    const BTN_INVERT = document.querySelector("#invertTout");
 
     const popup_lCc = document.querySelector("#lCc");
     const popup_cMc = document.querySelector("#cMc");
@@ -281,15 +284,28 @@
 
     }
 
-    function dechTout(){
-        document.querySelectorAll(".matiereBox input[type='checkbox']").forEach(checkbox => {
-            checkbox.checked = false;
+    function slide(){
+        var array = document.querySelectorAll(".matiereBox input[type='checkbox']");
+        var started = false;
+        array.forEach(checkbox => {
+            if (started) {
+                if (checkbox.checked) started = false;
+                checkbox.checked = true;
+            } else {
+                if (checkbox.checked) started = true;
+            }
         });
     }
 
     function cochTout(){
         document.querySelectorAll(".matiereBox input[type='checkbox']").forEach(checkbox => {
             checkbox.checked = true;
+        });
+    }
+
+    function invTout(){
+        document.querySelectorAll(".matiereBox input[type='checkbox']").forEach(checkbox => {
+            checkbox.checked = !checkbox.checked;
         });
     }
 
@@ -323,6 +339,17 @@
     function getQuestion(next){
         if(iter > QUESTIONS.length) {
             alert("Tu as atteint la fin des questions!");
+            QUESTIONS = [];
+            actQ = 0;
+            totQ = 1;
+            selectedMatieres = [];
+
+            state = 0;
+
+            iter = 1;
+            goodAnswerCounter = 0;
+            CHOOSE_TITLE.innerHTML = "Tu as terminé les questions, veux-tu continuer à t'entraîner ?"
+            readFile();
             return;
         }
         
@@ -344,9 +371,9 @@
     function addGoodAnswer(){
         if (state == 0) return;
         else {
-            if(goodAnswerCounter>totQ) return;
             goodAnswerCounter++;
             COUNTER_GOOD.innerHTML = goodAnswerCounter;
+            if(goodAnswerCounter>totQ) return;
             next();
         }
 
@@ -380,16 +407,17 @@
     }
 
     BTN_SHOWANSWER.addEventListener("click", showAnswer, false);
-    BTN_NEXTQUESTION.addEventListener("click", next, false);
     BTN_CORRECT.addEventListener("click", addGoodAnswer, false);
+    BTN_INCORRECT.addEventListener("click", next, false);
     BTN_PREVQUESTION.addEventListener("click", () => {
         if (state == 1) hideAnswer();
         else prev();
     });
 
     BTN_VALIDATEMATIERES.addEventListener("click", selectMatieres, false);
-    BTN_DECHTOUT.addEventListener("click", dechTout, false);
+    BTN_SLIDE.addEventListener("click", slide, false);
     BTN_COCHTOUT.addEventListener("click", cochTout, false);
+    BTN_INVERT.addEventListener("click", invTout, false);
 
     function isMacro(e){
         return  e.key == " " ||
@@ -412,6 +440,9 @@
 </script>
 
 <style>
+    .container {
+        overflow: hidden;
+    }
     /* Matiere selector - START*/
     #cMc[hidden="false"]{
         display: block;
@@ -451,6 +482,9 @@
     }
     .chooseMatiere button#validateMatieres{
         background-color: #6ab04c;
+    }
+    .chooseMatiere button#invertTout{
+        background-color: #343434fe;
     }
     .chooseMatiere button:hover{
         opacity: .8;
@@ -575,7 +609,13 @@
     .actions[hidden="false"] button.showAnswer{
         display: none;
     }
-    .actions[hidden="true"] button.nextQuestion{
+    .actions[hidden=true] button.goodAnswer {
+        display: none;
+    }
+    .actions[hidden=false] button.lastQuestion {
+        display: none;
+    }
+    .actions[hidden=true] button.badAnswer {
         display: none;
     }
     .actions button.goodAnswer{
@@ -584,8 +624,8 @@
     .actions button.lastQuestion{
         background-color: #341f97;
     }
-    button.nextQuestion{
-        background-color: #16a085;
+    .actions button.badAnswer{
+        background-color: #d04a4a;
     }
     button.showAnswer{
         background-color: #130f40;
